@@ -15,6 +15,9 @@ import upickle.default.{read => uread, write => uwrite, ReadWriter, macroRW} // 
 import os.{read => _, _} // Excluimos el método read de os-lib
 import scala.collection.mutable.ArrayBuffer
 import play.api.libs.json._
+import org.knowm.xchart.{CategoryChart, CategoryChartBuilder, SwingWrapper}
+import org.knowm.xchart.VectorGraphicsEncoder
+import org.knowm.xchart.VectorGraphicsEncoder.VectorGraphicsFormat
 
 object Downloader {
     private val client = MongoClients.create("mongodb://localhost:27017")
@@ -127,10 +130,52 @@ object Downloader {
         client.close()
     }
 
+    private def listarTrabajadores(): List[Trabajadores] = {
+        val datosTresPrimeros = collection.find().limit(3).iterator()
+        datosTresPrimeros.toList
+       
+        val nombres = listaTresPrimeros.map(_.trabajador)
+        val horasTienda = listaTresPrimeros.map(_.ntienda.getOrElse(0))
+    }
+
     private def crearGraficaDesdeMongo(): Unit = {
-        
+        listarTrabajadores()
+        val chart: CategoryChart = new CategoryChartBuilder()
+            .width(800).height(600)
+            .title("Primeros 3 trabajadores")
+            .xAxisTitle("Trabajador")
+            .yAxisTitle("Horas")
+            .build()
+
+        chart.addSeries("Horas", trabajadores.asJava, horasTienda.map(_.asInstanceOf[Number]).asJava)
 
     }
 }
+
+/* object GraficaSueldos extends App {
+  val filename = "sueldos.csv"
+  val lines = Source.fromFile(filename).getLines().drop(1).toList
+
+  val ciudades = lines.map(_.split(",")(0))
+  val sueldos = lines.map(_.split(",")(1).toInt)
+
+  val chart: CategoryChart = new CategoryChartBuilder()
+    .width(1000).height(600)
+    .title("Sueldo por Ciudad")
+    .xAxisTitle("Ciudad")
+    .yAxisTitle("Sueldo")
+    .build()
+
+  chart.addSeries("Sueldo", ciudades.asJava, sueldos.map(_.asInstanceOf[Number]).asJava)
+  new SwingWrapper(chart).displayChart()
+  Thread.sleep(20000)
+
+  // Guardar como SVG
+  VectorGraphicsEncoder.saveVectorGraphic(chart, "grafica_sueldos", VectorGraphicsFormat.SVG)
+
+  println("¡Gráfica guardada como grafica_sueldos.pdf!")
+} */
+
+
 
 
