@@ -134,13 +134,12 @@ object Downloader {
     private def crearGraficaDesdeMongo(): Unit = {
         val datosTresPrimeros = collection.find().limit(3).iterator()
         val listaTresPrimeros = ListBuffer[Trabajadores]()
-        
-        
+
         while (datosTresPrimeros.hasNext) {
             val doc = datosTresPrimeros.next()
             val trabajador = doc.getString("trabajador")
-            val ntienda = Option(doc.getInteger("ntienda"))
-            listaTresPrimeros += Trabajadores(trabajador, ntienda) 
+            val ntienda = doc.getInteger("ntienda")
+            listaTresPrimeros += Trabajadores(trabajador, None, None, 0, 0, ntienda, 0) 
         }
         
         val nombres = listaTresPrimeros.map(_.trabajador).toList
@@ -173,31 +172,6 @@ object Downloader {
         doc.close()
     }
 }
-
-/* object GraficaSueldos extends App {
-  val filename = "sueldos.csv"
-  val lines = Source.fromFile(filename).getLines().drop(1).toList
-
-  val ciudades = lines.map(_.split(",")(0))
-  val sueldos = lines.map(_.split(",")(1).toInt)
-
-  val chart: CategoryChart = new CategoryChartBuilder()
-    .width(1000).height(600)
-    .title("Sueldo por Ciudad")
-    .xAxisTitle("Ciudad")
-    .yAxisTitle("Sueldo")
-    .build()
-
-  chart.addSeries("Sueldo", ciudades.asJava, sueldos.map(_.asInstanceOf[Number]).asJava)
-  new SwingWrapper(chart).displayChart()
-  Thread.sleep(20000)
-
-  // Guardar como SVG
-  VectorGraphicsEncoder.saveVectorGraphic(chart, "grafica_sueldos", VectorGraphicsFormat.SVG)
-
-  println("¡Gráfica guardada como grafica_sueldos.pdf!")
-} */
-
 
 
 
