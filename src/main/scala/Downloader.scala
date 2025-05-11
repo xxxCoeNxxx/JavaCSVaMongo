@@ -18,6 +18,7 @@ import play.api.libs.json._
 import org.knowm.xchart.{CategoryChart, CategoryChartBuilder, SwingWrapper}
 import org.knowm.xchart.VectorGraphicsEncoder
 import org.knowm.xchart.VectorGraphicsEncoder.VectorGraphicsFormat
+import scala.collection.mutable.ListBuffer
 
 object Downloader {
     private val client = MongoClients.create("mongodb://localhost:27017")
@@ -130,16 +131,22 @@ object Downloader {
         client.close()
     }
 
-    private def listarTrabajadores(): List[Trabajadores] = {
-        val datosTresPrimeros = collection.find().limit(3).iterator()
-        datosTresPrimeros.toList
-       
-        val nombres = listaTresPrimeros.map(_.trabajador)
-        val horasTienda = listaTresPrimeros.map(_.ntienda.getOrElse(0))
-    }
-
     private def crearGraficaDesdeMongo(): Unit = {
-        listarTrabajadores()
+        val datosTresPrimeros = collection.find().limit(3).iterator()
+        val listaTresPrimeros = ListBuffer[Trabajadores]()
+        
+        
+        while (datosTresPrimeros.hasNext) {
+            val doc = datosTresPrimeros.next()
+            val trabajador = doc.getString("trabajador")
+            val ntienda = Option(doc.getInteger("ntienda"))
+            listaTresPrimeros += Trabajadores(trabajador, ntienda) 
+        }
+        
+        val nombres = listaTresPrimeros.map(_.trabajador).toList
+        val horasTienda = listaTresPrimeros.map(_.ntienda).toList
+
+
         val chart: CategoryChart = new CategoryChartBuilder()
             .width(800).height(600)
             .title("Primeros 3 trabajadores")
@@ -147,8 +154,23 @@ object Downloader {
             .yAxisTitle("Horas")
             .build()
 
-        chart.addSeries("Horas", trabajadores.asJava, horasTienda.map(_.asInstanceOf[Number]).asJava)
+        chart.addSeries("Horas", nombres.asJava, horasTienda.map(_.asInstanceOf[Number]).asJava)
 
+        val imgFile = "grafica_horasPrimerosTres.png"
+        BitmapEncoder.saveBitmap(chart, "grafica_horasPrimerosTres.png", BitmapFormat.PNG)
+
+        val doc = new XWPFDocument()
+        val out = new FileOutputStream("grafica_horasPrimerosTres.docx")
+        val paragraph = doc.createParagraph()
+        val run = paragraph.createRun()
+
+        val is = new FileInputStream(imgFile)
+        run.addPicture(is, Workbook.PICTURE_TYPE_PNG, imgFile, Units.toEMU(500), Units.toEMU(300))
+        is.close()
+
+        doc.write(out)
+        out.close()
+        doc.close()
     }
 }
 
